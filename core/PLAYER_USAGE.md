@@ -2,17 +2,17 @@
 
 ## Overview
 
-A classe `Player` da engine fornece funcionalidades básicas para qualquer jogo top-down no terminal:
-- ✅ Movimento (WASD / Arrow keys)
-- ✅ Sistema de nível e XP
-- ✅ Sistema de inventário
-- ✅ Sistema de gold
-- ✅ Notificações temporárias
-- ✅ Gerenciamento de HP/Attack/Defense
+The engine's `Player` class provides basic functionality for any top-down terminal game:
+- ✅ Movement (WASD / Arrow keys)
+- ✅ Level and XP system
+- ✅ Inventory system
+- ✅ Gold system
+- ✅ Temporary notifications
+- ✅ HP/Attack/Defense management
 
 ## Basic Usage
 
-### Simple Player (Sem Customização)
+### Simple Player (No Customization)
 ```python
 from engine.core.player import Player
 from blessed import Terminal
@@ -246,8 +246,8 @@ class RoguelikePlayer(BasePlayer):
 
 ## Benefits
 
-✅ **Reutilizável** - Use em qualquer jogo top-down  
-✅ **Extensível** - Fácil adicionar novos recursos  
-✅ **Completo** - Sistema de level, inventory, gold já prontos  
-✅ **Limpo** - Código organizado e documentado  
-✅ **Testado** - Usado no CmdMMO
+✅ **Reusable** - Use in any top-down game  
+✅ **Extensible** - Easy to add new features  
+✅ **Complete** - Level, inventory, gold systems already ready  
+✅ **Clean** - Organized and documented code  
+✅ **Tested** - Used in CmdMMO

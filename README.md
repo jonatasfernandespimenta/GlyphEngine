@@ -2,7 +2,7 @@
 
 > A powerful, reusable Python engine for creating top-down games in the terminal
 
-TermForge is a modular game engine designed specifically for building ASCII/terminal-based games with a focus on top-down perspective gameplay. It provides core systems for game loop management, map handling, player mechanics, UI interactions, and procedural generation.
+GlyphEngine is a modular game engine designed specifically for building ASCII/terminal-based games with a focus on top-down perspective gameplay. It provides core systems for game loop management, map handling, player mechanics, UI interactions, procedural generation, and advanced UI components including selectable menus and grid editors.
 
 ---
 
@@ -12,7 +12,7 @@ TermForge is a modular game engine designed specifically for building ASCII/term
 - **Flexible Map System** - Base classes for creating custom maps with collision detection
 - **Procedural Generation** - Backtracking algorithm for generating maze-like maps
 - **Player Management** - Full player class with movement, inventory, stats, and leveling
-- **UI Components** - Reusable UI systems for character creation and NPC interactions
+- **UI Components** - Reusable UI systems for character creation, NPC interactions, selectable menus, and grid editors
 - **State Management** - Persistent system registration for farms, quests, etc.
 - **Map Transitions** - Portal system for seamless map changes
 - **Terminal Rendering** - Built on the `blessed` library for cross-platform terminal graphics
@@ -41,7 +41,9 @@ engine/
 │   └── map_transition.py    # Portal/transition system
 ├── ui/
 │   ├── interaction_ui.py    # Generic NPC/shop interaction UI
-│   └── character_creation_ui.py  # Character creation flow
+│   ├── character_creation_ui.py  # Character creation flow
+│   ├── selectable_menu.py   # Menu system with keyboard navigation
+│   └── grid_editor.py       # Grid-based element editor with draggable components
 └── network/
     └── (network abstractions)
 ```
@@ -530,6 +532,167 @@ selected_class = char_ui.selectClass(
 
 ---
 
+## 🎛️ SelectableMenu
+
+A flexible menu system with keyboard navigation, customizable styling, and callback support.
+
+```python path=null start=null
+from engine.ui.selectable_menu import SelectableMenu
+
+# Create menu
+menu = SelectableMenu(
+    term=term,
+    title='Main Menu',
+    show_numbers=True  # Show 1, 2, 3... prefixes
+)
+
+# Add menu items with callbacks
+menu.add_item('New Game', callback=lambda item: start_new_game())
+menu.add_item('Load Game', callback=lambda item: load_game())
+menu.add_item('Settings', callback=lambda item: open_settings())
+menu.add_item('Exit', callback=lambda item: exit_game())
+
+# Customize appearance
+menu.marker_selected = ' ▶ '
+menu.marker_unselected = '   '
+menu.color_selected = 'black_on_yellow'
+menu.color_unselected = 'white'
+
+# Render at position
+menu.render(x=10, y=5, width=30)
+
+# Handle input in game loop
+key = term.inkey()
+if menu.handle_input(key):
+    # An action was triggered
+    pass
+```
+
+### MenuItem API
+
+Each menu item supports additional properties:
+
+```python path=null start=null
+item = menu.add_item('Special Item', data={'value': 100})
+item.is_selectable = False  # Make it non-selectable (visual only)
+item.is_visible = False     # Hide item from menu
+```
+
+### Navigation Methods
+
+| Method | Description |
+|--------|-------------|
+| `add_item(name, callback, data)` | Add a menu item with optional callback and data |
+| `clear_items()` | Remove all menu items |
+| `get_selected_item()` | Get currently selected MenuItem |
+| `next_item()` | Move selection down (skips non-selectable) |
+| `previous_item()` | Move selection up (skips non-selectable) |
+| `select_by_number(index)` | Select item by index (0-based) |
+| `execute_selected()` | Run callback of selected item |
+| `render(x, y, width)` | Draw menu at position |
+| `handle_input(key)` | Process keyboard input (W/S/arrows/numbers/Enter) |
+
+### Input Handling
+
+- **Arrow Keys / W/S**: Navigate up/down
+- **Enter / Space**: Select current item
+- **Number Keys**: Direct selection (if `show_numbers=True`)
+
+---
+
+## 🎨 GridEditor
+
+A grid-based editor for positioning and managing draggable elements, perfect for level editors or UI layout tools.
+
+```python path=null start=null
+from engine.ui.grid_editor import GridEditor
+from engine.ui.draggable import DraggableElement
+
+# Create grid editor
+editor = GridEditor(term=term, width=80, height=30)
+
+# Create draggable elements
+player_element = DraggableElement(
+    element_id='player',
+    x=10, y=10,
+    art="""🧙"""
+)
+
+enemy_element = DraggableElement(
+    element_id='enemy',
+    x=20, y=15,
+    art="""👾"""
+)
+
+# Add elements to editor
+editor.add_element(player_element)
+editor.add_element(enemy_element)
+
+# Render grid with elements
+editor.render_grid()
+
+# Handle movement in game loop
+key = term.inkey()
+if editor.handle_movement(key):
+    # Element was moved, re-render
+    editor.render_grid()
+
+# Cycle through elements
+if key == '\t':  # Tab key
+    editor.next_element()
+elif key.name == 'KEY_BTAB':  # Shift+Tab
+    editor.previous_element()
+```
+
+### GridEditor API
+
+| Method | Description |
+|--------|-------------|
+| `add_element(element)` | Add a DraggableElement to the grid |
+| `remove_element(element_id)` | Remove element by ID |
+| `get_selected_element()` | Get currently selected element |
+| `next_element()` | Select next element |
+| `previous_element()` | Select previous element |
+| `create_grid(floor_char, wall_h, wall_v)` | Generate grid background |
+| `place_element_on_grid(element)` | Place element art on grid |
+| `render_elements()` | Render all elements on grid |
+| `render_grid()` | Full render (grid + elements) |
+| `handle_movement(key)` | Move selected element (WASD/arrows) |
+
+### DraggableElement
+
+```python path=null start=null
+class DraggableElement:
+    def __init__(self, element_id: str, x: int, y: int, art: str):
+        self.element_id = element_id  # Unique identifier
+        self.x = x                    # Grid X position
+        self.y = y                    # Grid Y position
+        self.art = art                # ASCII art string
+        self.bounds = None            # Optional (min_x, min_y, max_x, max_y)
+    
+    def move(self, dx: int, dy: int) -> bool:
+        """Move element, respecting bounds. Returns True if moved."""
+        pass
+    
+    def get_art_lines(self) -> List[List[str]]:
+        """Get art as 2D character array"""
+        pass
+```
+
+### Custom Grid Styling
+
+```python path=null start=null
+# Customize grid appearance
+editor.create_grid(
+    floor_char='.',      # Background character
+    wall_char_h='═',    # Horizontal walls
+    wall_char_v='║'     # Vertical walls
+)
+# Creates grid with ╔╗╚╝ corners automatically
+```
+
+---
+
 ## 🎯 Advanced Examples
 
 ### Example 1: Complete Game with Multiple Systems
@@ -787,7 +950,7 @@ Contributions are welcome! Areas for improvement:
 
 ## 🎮 Example Games
 
-Check out the `game/` directory for a complete MMO implementation using TermForge:
+Check out the `game/` directory for a complete MMO implementation using GlyphEngine:
 - Farm system with crop growth
 - Procedural dungeons
 - Combat system

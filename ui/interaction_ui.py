@@ -50,11 +50,11 @@ class InteractionUI:
     # Draw options footer
     print(self.term.bold_cyan('=' * 60))
     if self.options:
-      option_text = ' | '.join([f"[{opt['key'].upper()}] {opt['label']}" for opt in self.options])
-      option_text += ' | [Q] Exit'
+      for opt in self.options:
+        print(self.term.white(f"  [{opt['key'].upper()}] {opt['label']}"))
+      print(self.term.white(f"  [Q] Exit"))
     else:
-      option_text = '[Q] Exit'
-    print(self.term.white(f'  {option_text}'))
+      print(self.term.white('  [Q] Exit'))
     print(self.term.bold_cyan('=' * 60))
   
   def handleExit(self, key):
@@ -64,6 +64,16 @@ class InteractionUI:
       self.player.setPlayerPosition([currentPosition[0] + 1, currentPosition[1]])
       self.isOpen = False
   
+  def get_number_input(self, prompt: str) -> int:
+    """Get a numeric input from the user"""
+    while True:
+      print(self.term.move_y(self.term.height - 2) + self.term.clear_eol + self.term.center(self.term.white(prompt)).rstrip())
+      inp = self.term.inkey()
+      if inp.isdigit():
+        return int(inp)
+      else:
+        self.showMessage('Please enter a valid number.', 'red')
+
   def handleInput(self, key):
     """Handle user input based on configured options"""
     self.handleExit(key)
@@ -100,7 +110,7 @@ class InteractionUI:
       return
     
     # Deduct gold
-    self.player.addGold(-item['price'])
+    self.player.removeGold(item['price'])
     
     # Mark as owned
     item['owned'] = True

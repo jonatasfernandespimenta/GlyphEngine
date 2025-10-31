@@ -1,5 +1,12 @@
 import time
 from typing import TYPE_CHECKING, List
+from typing import TypedDict
+
+class Item(TypedDict, total=False):
+  name: str
+  price: int
+  category: str
+  art: str
 
 if TYPE_CHECKING:
   from blessed import Terminal
@@ -35,6 +42,10 @@ class Player:
     self.maxHp = 100
     self.attack = 10
     self.defense = 5
+
+    # Rank system
+    self.maxGoldEarned = 0
+    self.maxLevelReached = 1
     
     # Level system
     self.xp = 0
@@ -87,6 +98,21 @@ class Player:
     
     elif key == 'i':
       self.isInventoryOpen = not self.isInventoryOpen
+    
+    elif key.lower() == 'k':
+      # Toggle skills menu if the player has this attribute (for MMO player)
+      if hasattr(self, 'isSkillsMenuOpen'):
+        self.isSkillsMenuOpen = not self.isSkillsMenuOpen
+    
+    elif key.lower() == 'p':
+      # Toggle party menu if the player has this attribute
+      if hasattr(self, 'isPartyMenuOpen'):
+        self.isPartyMenuOpen = not self.isPartyMenuOpen
+    
+    elif key.lower() == 'h':
+      # Toggle house editor if the player has this attribute
+      if hasattr(self, 'isHouseEditorOpen'):
+        self.isHouseEditorOpen = not self.isHouseEditorOpen
     
     if newPlayerPosition != self.playerPosition:
       if network_callback:
@@ -170,6 +196,7 @@ class Player:
   
   def levelUp(self):
     """Level up and increase stats"""
+    self.maxLevelReached = max(self.maxLevelReached, self.level + 1)
     self.xp -= self.xpToNextLevel
     self.level += 1
     self.xpToNextLevel = int(self.xpToNextLevel * 1.5)
@@ -196,7 +223,7 @@ class Player:
     
     return inventory
   
-  def addToInventory(self, item: dict):
+  def addToInventory(self, item: Item):
     """Add item to inventory"""
     self.inventory.append(item)
     self.showNotification(f"Collected: {item['name']}!")
@@ -228,7 +255,12 @@ class Player:
     return self.gold
   
   def addGold(self, amount: int):
+    self.maxGoldEarned = max(self.maxGoldEarned, self.gold + amount)
     self.gold += amount
+
+  def removeGold(self, amount: int):
+    self.maxGoldEarned = max(0, self.maxGoldEarned - amount)
+    self.gold = max(0, self.gold - amount)
   
   # ==================== Notifications ====================
   
